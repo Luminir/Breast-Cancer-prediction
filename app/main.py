@@ -1,6 +1,7 @@
 import streamlit as strlit
 import pandas as pandy
 import pickle as pickle
+import plotly.graph_objects as go
 
 def get_fixed_data():
     data = pandy.read_csv("data/wdbc.csv")
@@ -68,6 +69,53 @@ def sidebar():
         )
     return input_collection
 
+def get_radar_chart(data):
+    categories = ['Radius', 'Texture', 'Perimeter', 'Area', 'Smoothness', 'Compactness', 'Concavity', 'Concave Points','Symmetry', 'Fractal Dimension']
+
+    fig = go.Figure()
+
+    # data = input_data in MAIN => input_data = sidebar()
+    # Chart 1
+    fig.add_trace(go.Scatterpolar(
+        # default chart number of a catogory
+        r=[
+            data['radius_mean'], data['texture_mean'], data['perimeter_mean'],data['area_mean'], data['smoothness_mean'], data['compactness_mean'],
+            data['concavity_mean'], data['concave points_mean'], data['symmetry_mean'], data['fractal_dimension_mean']
+        ],
+        theta=categories,
+        fill='toself',
+        name='Mean Value'
+    ))
+    # Chart 2
+    fig.add_trace(go.Scatterpolar(
+        r=[ data['radius_se'], data['texture_se'], data['perimeter_se'], data['area_se'],data['smoothness_se'], 
+            data['compactness_se'], data['concavity_se'],data['concave points_se'], data['symmetry_se'],data['fractal_dimension_se']],
+        theta=categories,
+        fill='toself',
+        name='Standard Error'
+    ))
+    # Chart 3
+    fig.add_trace(go.Scatterpolar(
+        r=[
+          data['radius_worst'], data['texture_worst'], data['perimeter_worst'],data['area_worst'], 
+          data['smoothness_worst'], data['compactness_worst'],data['concavity_worst'], 
+          data['concave points_worst'], data['symmetry_worst'],data['fractal_dimension_worst']
+        ],
+        theta=categories,
+        fill='toself',
+        name='Worst Value'
+    ))
+
+    fig.update_layout(
+    polar=dict(
+        radialaxis=dict(
+        visible=True,
+        range=[0, 1]
+        )),
+    showlegend=True
+    )
+    return fig
+
 def main():
     strlit.set_page_config(
         page_title="Breast Cancer Predictor",
@@ -90,7 +138,12 @@ def main():
     column1, column2 = strlit.columns([3,1])
 
     with column1:
-        strlit.write("Column 1")
+        # strlit.write("Column 1")
+        # Injecting the data into our radar chart
+        chart = get_radar_chart(input_data)
+
+        # Injecting chart into streamlit app
+        strlit.plotly_chart(chart)
     with column2:
         strlit.write("Column 2")
 
