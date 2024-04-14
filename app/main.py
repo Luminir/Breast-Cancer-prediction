@@ -69,7 +69,29 @@ def sidebar():
         )
     return input_collection
 
+# return the dictionary between 0 and 1
+def get_scaled_val(input_dictionary):
+    data = get_fixed_data()
+    predictors = data.drop(['diagnosis'], axis=1)
+
+    scaled_dictionary = {}
+
+    for key, val in input_dictionary.items():
+        max_val = predictors[key].max()
+        min_val = predictors[key].min()
+
+        # We set set range at get_radar_chart = [0,1] so:
+        scaled_val = (val - min_val) / (max_val - min_val)
+
+        scaled_dictionary[key] = scaled_val
+
+    return scaled_dictionary
+
+
 def get_radar_chart(data):
+    
+    data = get_scaled_val(data)
+
     categories = ['Radius', 'Texture', 'Perimeter', 'Area', 'Smoothness', 'Compactness', 'Concavity', 'Concave Points','Symmetry', 'Fractal Dimension']
 
     fig = go.Figure()
@@ -92,6 +114,8 @@ def get_radar_chart(data):
             data['compactness_se'], data['concavity_se'],data['concave points_se'], data['symmetry_se'],data['fractal_dimension_se']],
         theta=categories,
         fill='toself',
+        fillcolor='rgba(0, 255, 0, 0.5)',  # Specify the fill color (red with 50% opacity)
+        line_color='rgba(0, 100, 0, 0.5)',  # Specify the line color (red)
         name='Standard Error'
     ))
     # Chart 3
