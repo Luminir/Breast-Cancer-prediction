@@ -2,6 +2,7 @@ import streamlit as strlit
 import pandas as pandy
 import pickle as pickle
 import plotly.graph_objects as go
+import numpy as numpy
 
 def get_fixed_data():
     data = pandy.read_csv("data/wdbc.csv")
@@ -140,6 +141,38 @@ def get_radar_chart(data):
     )
     return fig
 
+# importing TRAINED model (not trainning model while using app) into our app.
+def add_predictions(data):
+    # read binary file
+    model = pickle.load(open("model/model.pkl", "rb")) 
+    scaler = pickle.load(open("model/scaler.pkl", "rb"))
+
+    # CONVERT data from our input => single array with val
+    inputArr = numpy.array(list(data.values())).reshape(1, -1)
+
+    # Scaler => makes the default numbers to be 0, as 0 is the MEASURING LINE.
+    inputArr_scaled = scaler.transform(inputArr)
+    # strlit.write(inputArr_scaled)
+
+    # Make prediction based on the numbers
+    prediction = model.predict(inputArr_scaled)
+    # strlit.write(prediction)
+
+    strlit.subheader("Cell cluster prediction")
+    # strlit.subheader("Dự đoán cụm tế bào:")
+
+    if prediction[0] == 0:
+        strlit.write("<span class='diagnosis benign'>Benign/ Lành tính</span>", unsafe_allow_html= True)
+    else:
+        strlit.write("<span class='diagnosis malicious'>Malicious/ Ác tính</span>", unsafe_allow_html= True)
+
+    strlit.write(f"Probaility of being benign: ", model.predict_proba(inputArr_scaled)[0][0]*100, "%")
+    strlit.write("Probaility of being malicious: ", model.predict_proba(inputArr_scaled)[0][1]*100, "%")
+    # strlit.write("Probability of being benign: {:.2f}%".format(model.predict_proba(inputArr_scaled)[0][0]*100))
+    # strlit.write("Probability of being malignant: {:.2f}%".format(model.predict_proba(inputArr_scaled)[0][1]*100))
+    strlit.write("Help assisting professionals in diagnosing Breast Cancer in patients.")
+    strlit.write("\u26A0️ NOTE: NOT a subtitute for professional diagnosis.")
+
 def main():
     strlit.set_page_config(
         page_title="Breast Cancer Predictor",
@@ -149,6 +182,10 @@ def main():
         )
     # strlit.markdown(f"<h1 style='text-align: center;'>{}</h1>", unsafe_allow_html=True)
     
+    # css
+    with open("style/style.css") as file:
+        strlit.markdown("<style>{}<style>".format(file.read()), unsafe_allow_html= True)
+
     input_data = sidebar()
     # TESTING: strlit.write(input_data) 
 
@@ -169,7 +206,8 @@ def main():
         # Injecting chart into streamlit app
         strlit.plotly_chart(chart)
     with column2:
-        strlit.write("Column 2")
+        # strlit.write("Column 2")
+        add_predictions(input_data)
 
 if __name__ == '__main__':
     main()
